@@ -3,6 +3,7 @@ import cv2
 import random
 from datetime import datetime
 import time
+from classes import Supermarket
 
 from pandas.io.parsers import read_csv
 
@@ -83,9 +84,6 @@ class SupermarketMap:
                     x * TILE_SIZE: (x + 1) * TILE_SIZE,
                 ] = bm
 
-    def is_open(self):
-            return datetime.strptime(self.opening, '%H:%M:%S') <= datetime.strptime(self.get_time(), '%H:%M:%S') <= datetime.strptime(self.closing, '%H:%M:%S')
-
     def draw(self, frame, offset=OFS):
         """
         draws the image into a frame
@@ -156,11 +154,11 @@ if __name__ == "__main__":
 
     background = np.zeros((484, 676, 3), np.uint8)
     tiles = cv2.imread("tiles.png")
-    simulated_table = read_csv('./data/Simulated_Market_Table/simulated_market_table_average.csv')
+    simulated_table = read_csv('./data/Simulated_Market_Table/simulated_market_table_average.csv', parse_dates=['timestamp'])
     #print(simulated_table)
     opening = simulated_table['timestamp'].iloc[0]
     closing = simulated_table['timestamp'].iloc[-1]
-
+    
     section = simulated_table.loc[simulated_table['customer_no']==1]['location']
     print(type(section),section)
 
@@ -173,13 +171,19 @@ if __name__ == "__main__":
     market = SupermarketMap(MARKET, tiles,opening,closing)
     customer = Customer(market,customer_figure)
     #customer2 = Customer(market,customer_figure,15,8)
-   
-    while market.is_open():
+    minute = simulated_table['timestamp'].loc[simulated_table['timestamp']=='07:00:00']
+    print('before',type(minute))
+    #minute = datetime.strptime(minute, '%H:%M:%S')
+    print('after',type(minute))
+    #opening = datetime.strptime(opening, '%H:%M:%S')
+    #closing = datetime.strptime(closing, '%H:%M:%S')
+    while (opening <= minute) and  (minute <= closing):
+        
         frame = background.copy()
         market.draw(frame)
-
-        for customer_no in range(1,3):
-            section = simulated_table.loc[simulated_table['customer_no']==customer_no]['location']
+        
+        for customer_index in simulated_table.loc[simulated_table['timestamp']==minute]['customer_no']:
+            section = simulated_table.loc[simulated_table['customer_no']==customer_index]['location']
             for i in section:         
                 
                 print(i)
@@ -197,6 +201,7 @@ if __name__ == "__main__":
         if key == "w":    
             customer.move('up')
             #customer2.move('up')
+        minute = minute + datetime.timedelta(minutes = 1)
 
     cv2.destroyAllWindows()
 
