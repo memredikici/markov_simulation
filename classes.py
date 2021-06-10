@@ -103,7 +103,7 @@ while a.is_open():
     for customer in a.customers:
         print_list = str(a.get_time()+' customer_no ' +
                          str(customer.name)+' location '+customer.state)
-        print(print_list)
+        #print(print_list)
         print_list = print_list.split()
         market_rangers = market_rangers.append(
             {'timestamp': print_list[0], 'customer_no': print_list[2], 'location': print_list[4]}, ignore_index=True)
