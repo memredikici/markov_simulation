@@ -2,9 +2,8 @@ import numpy as np
 import pandas as pd
 import cv2
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
-from classes import Supermarket
 
 from pandas.io.parsers import read_csv
 
@@ -115,23 +114,23 @@ class Customer:
     def draw(self, frame, location):
         if location == 'dairy':
             self.x = random.choice([6, 7])
-            self.y = random.choice([2, 6])  # 2,6
+            self.y = random.choice([2,3,4,5,6])  # 2,6
 
         elif location == 'drinks':
             self.x = random.choice([2, 3])  # 2,3
-            self.y = random.choice([2, 6])  # 2,6
+            self.y = random.choice([2,3,4,5,6])  # 2,6
             print(self.x, self.y)
 
         elif location == 'fruit':
             self.x = random.choice([14, 15])  # 14,15
-            self.y = random.choice([2, 6])  # 2,6
+            self.y = random.choice([2,3,4,5,6])  # 2,6
         elif location == 'spices':
             self.x = random.choice([10, 11])  # 10,11
-            self.y = random.choice([2, 6])  # 2,6
+            self.y = random.choice([2,3,4,5,6])  # 2,6
         elif location == 'checkout':
-            self.x = 5  # 10,11
+            self.x = random.choice([5,9,13])  # 10,11
             # self.x = random.choice([4,5])# 10,11
-            self.y = random.choice([8, 10])  # 2,6
+            self.y = random.choice([8, 9])  # 2,6
         print(self.x, self.y, location)
         xpos = OFS + self.x * TILE_SIZE
         ypos = OFS + self.y * TILE_SIZE
@@ -169,13 +168,13 @@ if __name__ == "__main__":
         y = (row - 1) * 32
         x = (col - 1) * 32
         return tiles[y:y + 32, x:x + 32]
+    customer_figure = cv2.imread("./data/figures/figure1.png")
 
-
-    customer_figure = extract(8, 2, tiles)
+    #customer_figure = extract(8, 2, tiles)
     market = SupermarketMap(MARKET, tiles, opening, closing)
     customer = Customer(market, customer_figure)
     # customer2 = Customer(market,customer_figure,15,8)
-    minute = simulated_table['timestamp'].loc[simulated_table['timestamp'] == '07:00:00']
+    #minute = simulated_table['timestamp'].loc[simulated_table['timestamp'] == '07:00:00']
     # minute = minute.to_timestamp()
     # print('before', (minute.iloc[0]))
     #
@@ -190,25 +189,38 @@ if __name__ == "__main__":
     # print('after', type(minute))
     # opening = datetime.strptime(opening, '%H:%M:%S')
     # closing = datetime.strptime(closing, '%H:%M:%S')
+    
+    #time_index = pd.date_range(opening, closing, freq="T").time
     for i in range(0, len(simulated_table['timestamp'])):
-        time_current = simulated_table['timestamp'].iloc[i]
+
+        time_current = opening
         frame = background.copy()
         market.draw(frame)
-
+        #print(simulated_table.loc[simulated_table['timestamp'] == time_current]['customer_no'])
         for customer_index in simulated_table.loc[simulated_table['timestamp'] == time_current]['customer_no']:
-            section = simulated_table.loc[simulated_table['customer_no'] == customer_index]['location']
-            for i in section:
-                print(i)
-                customer.draw(frame, i)
-                cv2.imshow("frame", frame)
-                time.sleep(0.05)
+            
+            print('time:',time_current,'customer_no:', customer_index)
+            section = 0
+            section = pd.DataFrame(simulated_table.loc[(simulated_table['customer_no'] == customer_index)&(simulated_table['timestamp'] == time_current)])
+            print(section)
+            section = str(section['location']).split()[1]
+            print(section)
+            #section = section['location'].iloc[customer_index]
+            
+            #for i in section:
+            #print(i)
+            customer.draw(frame, section)
+            cv2.imshow("frame", frame)
+            time.sleep(0.8)
+            key = chr(cv2.waitKey(1) & 0xFF)
 
-        key = chr(cv2.waitKey(1) & 0xFF)
+            if key == "q":
+                break
+            if key == "w":
+                customer.move('up')
+        opening = opening + timedelta(minutes = 1)
 
-        if key == "q":
-            break
-        if key == "w":
-            customer.move('up')
+        
         # customer2.move('up')
         #minute = minute + datetime.timedelta(minutes=1)
         #market.write_image("supermarket.png")
