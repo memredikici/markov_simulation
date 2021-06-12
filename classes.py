@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-transition_matrix = pd.read_csv(
+TRANSITION_MATRIX = pd.read_csv(
     './data/transition_matrices/transition_matrix_average.csv', index_col=0)
 
 
@@ -27,7 +27,7 @@ class Customer:
         Returns nothing.
         '''
         self.state = random.choices(['checkout', 'dairy', 'drinks', 'fruit', 'spices'], list(
-            transition_matrix.loc[self.state]))
+            TRANSITION_MATRIX.loc[self.state]))
         self.state = self.state[0]
 
     def is_active(self):
@@ -94,21 +94,21 @@ class Supermarket:
                 self.customers.remove(customer)
 
 
-a = Supermarket('MarketRangers', '07:00:00', '07:59:00')
-a.get_time()
-data = {'timestamp': [], 'customer_no': [], 'location': []}
-market_rangers = pd.DataFrame(data)
-while a.is_open():
-    a.add_new_customers()
-    for customer in a.customers:
-        print_list = str(a.get_time()+' customer_no ' +
-                         str(customer.name)+' location '+customer.state)
-        #print(print_list)
-        print_list = print_list.split()
-        market_rangers = market_rangers.append(
-            {'timestamp': print_list[0], 'customer_no': print_list[2], 'location': print_list[4]}, ignore_index=True)
+if __name__ == "__main__":
+    supermarket = Supermarket('MarketRangers', '07:00:00', '07:59:00')
+    market_rangers = pd.DataFrame()
 
-    a.remove_exitsting_customers()
-    a.next_minute()
+    while supermarket.is_open():
+        supermarket.add_new_customers()
+        for customer in supermarket.customers:
+            market_rangers = market_rangers.append({'timestamp': supermarket.get_time(),
+                                                    'customer_no': str(customer.name),
+                                                    'location': customer.state
+                                                    }, ignore_index=True)
 
-market_rangers.to_csv('./data/Simulated_Market_Table/simulated_market_table_average.csv', index=0)
+        supermarket.remove_exitsting_customers()
+        supermarket.next_minute()
+
+    market_rangers.set_index('timestamp', inplace=True)
+    market_rangers.to_csv(
+        './data/Simulated_Market_Table/simulated_market_table_average.csv')
